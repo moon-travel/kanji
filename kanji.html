@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>漢字練習帳</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #faf8f5;
+      --surface: #ffffff;
+      --surface2: #f4f1eb;
+      --border: #e2ddd5;
+      --accent: #c0392b;
+      --accent-light: #fdecea;
+      --accent2: #2c3e50;
+      --text: #2c2c2c;
+      --text-muted: #888;
+      --green: #27ae60;
+      --green-light: #eafaf1;
+      --radius: 12px;
+      --shadow: 0 2px 16px rgba(0,0,0,0.07);
+    }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Yu Gothic', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--accent2);
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.05em; }
+    header .subtitle { font-size: 0.8rem; opacity: 0.65; margin-top: 2px; }
+
+    .kanji-icon {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900; color: white;
+      flex-shrink: 0;
+    }
+
+    nav {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 0 24px;
+    }
+    nav button {
+      background: none; border: none; cursor: pointer;
+      padding: 14px 20px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-family: inherit;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    nav button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 700;
+    }
+    nav button:hover:not(.active) { color: var(--text); }
+
+    .page { display: none; padding: 24px; max-width: 900px; margin: 0 auto; }
+    .page.active { display: block; }
+
+    /* ===== 登録ページ ===== */
+    .register-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+    .register-card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+      color: var(--accent2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .register-card h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 18px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+    .form-group input.kanji-input {
+      font-size: 2rem;
+      text-align: center;
+      height: 70px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 22px;
+      border: none; border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit;
+      cursor: pointer; font-weight: 700;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #a93226; }
+    .btn-success { background: var(--green); color: white; }
+    .btn-success:hover { background: #229954; }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-danger { background: #e74c3c; color: white; font-size: 0.8rem; padding: 5px 12px; }
+    .btn-danger:hover { background: #c0392b; }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .tag-jlpt { background: #eaf4fb; color: #2980b9; }
+
+    /* 登録済みリスト */
+    .kanji-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+    .kanji-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      position: relative;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .kanji-card:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--accent);
+    }
+    .kanji-card .k-char {
+      font-size: 2.8rem;
+      line-height: 1.2;
+      color: var(--accent2);
+      font-weight: 900;
+    }
+    .kanji-card .k-yomi {
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-top: 4px;
+      font-weight: 700;
+    }
+    .kanji-card .k-meaning {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+    .kanji-card .k-count {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .kanji-card .delete-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: none; border: none; cursor: pointer;
+      color: var(--border); font-size: 1rem;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+    .kanji-card .delete-btn:hover { color: var(--accent); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+    /* ===== 練習ページ ===== */
+    .practice-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus { border-color: var(--accent); }
+
+    .practice-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .practice-prompt {
+      margin-bottom: 24px;
+    }
+    .prompt-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .prompt-value {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--accent2);
+      line-height: 1.1;
+    }
+    .prompt-yomi {
+      font-size: 1.2rem;
+      color: var(--accent);
+      margin-top: 6px;
+      font-weight: 700;
+    }
+    .prompt-meaning {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 書き取り練習キャンバス */
+    .canvas-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .canvas-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .writing-canvas-wrapper {
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    canvas#writingCanvas {
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .canvas-grid {
+      position: absolute;
+      top: 0; left: 0;
+      pointer-events: none;
+      width: 100%; height: 100%;
+    }
+    .canvas-actions {
+      display: flex; gap: 10px;
+    }
+
+    /* 答え確認 */
+    .answer-section {
+      margin-top: 16px;
+    }
+    .answer-reveal {
+      background: var(--accent-light);
+      border: 1.5px solid var(--accent);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      display: none;
+    }
+    .answer-reveal.show { display: block; }
+    .answer-kanji {
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1.1;
+    }
+    .answer-detail {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .result-btns {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .btn-correct { background: var(--green); color: white; font-size: 1rem; padding: 12px 28px; }
+    .btn-correct:hover { background: #229954; }
+    .btn-wrong { background: #e74c3c; color: white; font-size: 1rem; padding: 12px 28px; }
+    .btn-wrong:hover { background: #c0392b; }
+
+    /* 進捗バー */
+    .progress-bar-wrap {
+      background: var(--border);
+      border-radius: 999px;
+      height: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #e74c3c);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      text-align: right;
+    }
+
+    /* 結果サマリ */
+    .summary-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      display: none;
+    }
+    .summary-card.show { display: block; }
+    .summary-score {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--accent);
+    }
+    .summary-label { font-size: 0.95rem; color: var(--text-muted); margin-top: 4px; }
+    .summary-breakdown {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin: 20px 0;
+    }
+    .summary-item { text-align: center; }
+    .summary-item .num { font-size: 1.6rem; font-weight: 700; }
+    .summary-item .lbl { font-size: 0.75rem; color: var(--text-muted); }
+    .correct-num { color: var(--green); }
+    .wrong-num { color: var(--accent); }
+
+    /* ===== 統計ページ ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .stat-card .num { font-size: 2.2rem; font-weight: 900; color: var(--accent); }
+    .stat-card .lbl { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+    .sticker {
+      display: inline-block;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin: 2px;
+    }
+    .sticker.green { background: var(--green-light); color: var(--green); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      background: var(--accent2);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    .stroke-toolbar {
+      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    .stroke-toolbar label { font-size: 0.8rem; color: var(--text-muted); }
+    input[type=range] { width: 80px; cursor: pointer; }
+    input[type=color] {
+      width: 32px; height: 32px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px; cursor: pointer;
+      padding: 2px; background: white;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="kanji-icon">字</div>
+  <div>
+    <h1>漢字練習帳</h1>
+    <div class="subtitle">登録した漢字を何度でも練習できます</div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('register')">📋 登録・一覧</button>
+  <button onclick="showPage('practice')">✏️ 練習</button>
+  <button onclick="showPage('stats')">📊 統計</button>
+</nav>
+
+<!-- ===== 登録ページ ===== -->
+<div id="page-register" class="page active">
+  <div class="register-card">
+    <h2>新しい漢字を登録</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>漢字（書き）</label>
+        <input type="text" id="inp-kanji" class="kanji-input" placeholder="漢" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>よみ（読み）</label>
+        <input type="text" id="inp-yomi" placeholder="例：かん、漢（おとこ）">
+      </div>
+      <div class="form-group">
+        <label>意味・メモ（任意）</label>
+        <input type="text" id="inp-meaning" placeholder="例：男らしい・中国">
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="registerKanji()">＋ 登録する</button>
+      <button class="btn btn-ghost" onclick="clearForm()">クリア</button>
+      <div style="margin-left:auto; font-size:0.85rem; color:var(--text-muted)">
+        登録数：<strong id="count-badge">0</strong> 文字
+      </div>
+    </div>
+  </div>
+
+  <div class="register-card">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+      <h2 style="margin-bottom:0">登録済み漢字</h2>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="search-input" placeholder="🔍 検索..." style="border:1.5px solid var(--border); border-radius:8px; padding:8px 12px; font-size:0.9rem; font-family:inherit; outline:none; background:var(--bg); width:180px;"
+          oninput="renderList()">
+        <button class="btn btn-danger" onclick="clearAll()" style="padding:8px 14px; font-size:0.85rem;">全削除</button>
+      </div>
+    </div>
+    <div id="kanji-list-container">
+      <div class="empty-state">
+        <div class="empty-icon">📖</div>
+        <div>まだ漢字が登録されていません</div>
+        <div style="font-size:0.85rem; margin-top:6px;">上のフォームから漢字を追加してください</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 練習ページ ===== -->
+<div id="page-practice" class="page">
+  <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+    <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+      <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">練習モード</label>
+      <select id="practice-mode">
+        <option value="yomi2kanji">読み → 漢字を書く</option>
+        <option value="kanji2yomi">漢字 → 読みを書く</option>
+        <option value="all">ランダム（混合）</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin:0; flex:1; min-width:160px;">
+      <label style="font-size:0.8rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">順番</label>
+      <select id="practice-order">
+        <option value="random">ランダム</option>
+        <option value="order">登録順</option>
+        <option value="weak">苦手優先</option>
+      </select>
+    </div>
+    <div style="padding-top:20px;">
+      <button class="btn btn-primary" onclick="startPractice()">▶ 練習開始</button>
+    </div>
+  </div>
+
+  <!-- 進捗 -->
+  <div id="progress-wrap" style="display:none; margin-bottom:4px;">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="prog-bar" style="width:0%"></div></div>
+    <div class="progress-text" id="prog-text">0 / 0</div>
+  </div>
+
+  <!-- 問題カード -->
+  <div id="practice-main" style="display:none;">
+    <div class="practice-box">
+      <div class="practice-prompt">
+        <div class="prompt-label" id="prompt-label">よみ</div>
+        <div class="prompt-value" id="prompt-value">—</div>
+        <div class="prompt-yomi" id="prompt-sub" style="display:none"></div>
+      </div>
+
+      <!-- 書き取りキャンバス -->
+      <div class="canvas-area">
+        <div class="canvas-label">▼ ここに書いてみよう</div>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+          <div class="stroke-toolbar">
+            <label>太さ</label>
+            <input type="range" id="brush-size" min="2" max="20" value="6">
+            <label>色</label>
+            <input type="color" id="brush-color" value="#2c3e50">
+            <label><input type="checkbox" id="show-grid" checked onchange="redrawGrid()"> 罫線</label>
+          </div>
+        </div>
+        <div class="writing-canvas-wrapper">
+          <canvas id="writingCanvas" width="300" height="300"></canvas>
+          <canvas id="gridCanvas" class="canvas-grid" width="300" height="300"></canvas>
+        </div>
+        <div class="canvas-actions">
+          <button class="btn btn-ghost" style="font-size:0.85rem; padding:7px 16px;" onclick="clearCanvas()">🗑 消す</button>
+        </div>
+      </div>
+
+      <!-- 答え確認 -->
+      <div class="answer-section">
+        <button class="btn btn-ghost" id="reveal-btn" onclick="revealAnswer()" style="margin-bottom:12px;">答えを確認する</button>
+        <div class="answer-reveal" id="answer-reveal">
+          <div class="answer-kanji" id="answer-kanji">—</div>
+          <div class="answer-detail" id="answer-detail"></div>
+        </div>
+        <div class="result-btns" id="result-btns" style="display:none;">
+          <button class="btn btn-correct" onclick="markResult(true)">⭕ 正解！</button>
+          <button class="btn btn-wrong" onclick="markResult(false)">✕ 不正解</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果サマリ -->
+  <div class="summary-card" id="summary-card">
+    <div style="font-size:2rem; margin-bottom:12px;">🎉</div>
+    <div class="summary-score" id="summary-score">0%</div>
+    <div class="summary-label">正解率</div>
+    <div class="summary-breakdown">
+      <div class="summary-item">
+        <div class="num correct-num" id="sum-correct">0</div>
+        <div class="lbl">正解</div>
+      </div>
+      <div class="summary-item">
+        <div class="num wrong-num" id="sum-wrong">0</div>
+        <div class="lbl">不正解</div>
+      </div>
+      <div class="summary-item">
+        <div class="num" id="sum-total">0</div>
+        <div class="lbl">合計</div>
+      </div>
+    </div>
+    <div id="weak-list" style="margin-bottom:16px;"></div>
+    <button class="btn btn-primary" onclick="startPractice()">もう一度</button>
+  </div>
+
+  <div id="practice-empty" style="display:none;">
+    <div class="empty-state">
+      <div class="empty-icon">✏️</div>
+      <div>練習する漢字が登録されていません</div>
+      <div style="font-size:0.85rem; margin-top:6px;">「登録・一覧」タブから漢字を追加してください</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 統計ページ ===== -->
+<div id="page-stats" class="page">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="register-card" id="stats-detail">
+    <h2>漢字ごとの成績</h2>
+    <div id="stats-detail-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== データ管理 =====================
+const STORAGE_KEY = 'kanji_db';
+const STATS_KEY   = 'kanji_stats';
+
+function loadKanji() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveKanji(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+
+function loadStats() {
+  try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveStats(obj) { localStorage.setItem(STATS_KEY, JSON.stringify(obj)); }
+
+// ===================== UI共通 =====================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (id === 'stats') renderStats();
+}
+
+function toast(msg, duration = 2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ===================== 登録 =====================
+function registerKanji() {
+  const kanji   = document.getElementById('inp-kanji').value.trim();
+  const yomi    = document.getElementById('inp-yomi').value.trim();
+  const meaning = document.getElementById('inp-meaning').value.trim();
+
+  if (!kanji) { toast('⚠️ 漢字を入力してください'); return; }
+  if (!yomi)  { toast('⚠️ よみを入力してください');  return; }
+
+  const list = loadKanji();
+  if (list.some(k => k.kanji === kanji)) { toast('⚠️ すでに登録されています'); return; }
+
+  list.push({ id: Date.now(), kanji, yomi, meaning, createdAt: new Date().toISOString() });
+  saveKanji(list);
+  clearForm();
+  renderList();
+  toast('✅ 「' + kanji + '」を登録しました！');
+}
+
+function clearForm() {
+  ['inp-kanji','inp-yomi','inp-meaning'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inp-kanji').focus();
+}
+
+function deleteKanji(id) {
+  const list = loadKanji().filter(k => k.id !== id);
+  saveKanji(list);
+  renderList();
+  toast('🗑 削除しました');
+}
+
+function clearAll() {
+  if (!confirm('全ての漢字を削除しますか？')) return;
+  saveKanji([]);
+  renderList();
+  toast('🗑 全削除しました');
+}
+
+function renderList() {
+  const q    = document.getElementById('search-input').value.trim().toLowerCase();
+  const list = loadKanji().filter(k =>
+    !q || k.kanji.includes(q) || k.yomi.toLowerCase().includes(q) || (k.meaning||'').toLowerCase().includes(q)
+  );
+  document.getElementById('count-badge').textContent = loadKanji().length;
+
+  const container = document.getElementById('kanji-list-container');
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📖</div>
+        <div>${loadKanji().length ? '検索結果がありません' : 'まだ漢字が登録されていません'}</div>
+      </div>`;
+    return;
+  }
+
+  const stats = loadStats();
+  container.innerHTML = `<div class="kanji-list">` + list.map(k => {
+    const s = stats[k.id] || { correct: 0, wrong: 0 };
+    const total = s.correct + s.wrong;
+    const rate  = total ? Math.round(s.correct / total * 100) : null;
+    return `
+      <div class="kanji-card">
+        <button class="delete-btn" onclick="deleteKanji(${k.id})" title="削除">✕</button>
+        <div class="k-char">${k.kanji}</div>
+        <div class="k-yomi">${k.yomi}</div>
+        ${k.meaning ? `<div class="k-meaning">${k.meaning}</div>` : ''}
+        <div class="k-count">
+          ${rate !== null ? `正解率 ${rate}%（${total}回）` : '未練習'}
+        </div>
+      </div>`;
+  }).join('') + `</div>`;
+}
+
+// ===================== キャンバス =====================
+const canvas  = document.getElementById('writingCanvas');
+const ctx     = canvas.getContext('2d');
+const gridCvs = document.getElementById('gridCanvas');
+const gCtx    = gridCvs.getContext('2d');
+let drawing   = false;
+let lastX = 0, lastY = 0;
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  if (e.touches) {
+    return { x: (e.touches[0].clientX - rect.left) * scaleX,
+             y: (e.touches[0].clientY - rect.top)  * scaleY };
+  }
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+canvas.addEventListener('mousedown',  e => { drawing = true; const p = getPos(e); lastX = p.x; lastY = p.y; });
+canvas.addEventListener('mouseup',    () => { drawing = false; ctx.beginPath(); });
+canvas.addEventListener('mouseleave', () => { drawing = false; ctx.beginPath(); });
+canvas.addEventListener('mousemove',  e => {
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.lineWidth   = document.getElementById('brush-size').value;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.strokeStyle = document.getElementById('brush-color').value;
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  lastX = p.x; lastY = p.y;
+});
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const p = getPos(e); lastX = p.x; lastY = p.y; drawing = true;
+}, { passive: false });
+canvas.addEventListener('touchmove',  e => {
+  e.preventDefault();
+  if (!drawing) return;
+  const p = getPos(e);
+  ctx.lineWidth   = document.getElementById('brush-size').value;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.strokeStyle = document.getElementById('brush-color').value;
+  ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke();
+  lastX = p.x; lastY = p.y;
+}, { passive: false });
+canvas.addEventListener('touchend', () => { drawing = false; });
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function redrawGrid() {
+  gCtx.clearRect(0, 0, gridCvs.width, gridCvs.height);
+  if (!document.getElementById('show-grid').checked) return;
+  const w = gridCvs.width, h = gridCvs.height;
+  gCtx.strokeStyle = '#ddd'; gCtx.lineWidth = 1;
+  // 外枠
+  gCtx.strokeRect(1, 1, w-2, h-2);
+  // 中央十字
+  gCtx.beginPath();
+  gCtx.moveTo(w/2, 0); gCtx.lineTo(w/2, h);
+  gCtx.moveTo(0, h/2); gCtx.lineTo(w, h/2);
+  gCtx.stroke();
+  // 対角線（薄め）
+  gCtx.strokeStyle = '#ececec';
+  gCtx.beginPath();
+  gCtx.moveTo(0, 0); gCtx.lineTo(w, h);
+  gCtx.moveTo(w, 0); gCtx.lineTo(0, h);
+  gCtx.stroke();
+}
+
+redrawGrid();
+
+// ===================== 練習 =====================
+let practiceQueue = [];
+let practiceIndex = 0;
+let sessionCorrect = 0;
+let sessionWrong   = 0;
+let sessionWrongs  = [];
+
+function buildQueue() {
+  const list  = loadKanji();
+  const order = document.getElementById('practice-order').value;
+  const stats = loadStats();
+
+  let q = [...list];
+  if (order === 'random') {
+    q.sort(() => Math.random() - 0.5);
+  } else if (order === 'weak') {
+    q.sort((a, b) => {
+      const sa = stats[a.id] || { correct:0, wrong:0 };
+      const sb = stats[b.id] || { correct:0, wrong:0 };
+      const ra = (sa.correct + sa.wrong) ? sa.correct / (sa.correct + sa.wrong) : -1;
+      const rb = (sb.correct + sb.wrong) ? sb.correct / (sb.correct + sb.wrong) : -1;
+      return ra - rb;
+    });
+  }
+  return q;
+}
+
+function startPractice() {
+  const list = loadKanji();
+  if (list.length === 0) {
+    document.getElementById('practice-empty').style.display = 'block';
+    document.getElementById('practice-main').style.display  = 'none';
+    document.getElementById('summary-card').classList.remove('show');
+    document.getElementById('progress-wrap').style.display  = 'none';
+    return;
+  }
+  practiceQueue  = buildQueue();
+  practiceIndex  = 0;
+  sessionCorrect = 0;
+  sessionWrong   = 0;
+  sessionWrongs  = [];
+
+  document.getElementById('practice-empty').style.display = 'none';
+  document.getElementById('summary-card').classList.remove('show');
+  document.getElementById('practice-main').style.display  = 'block';
+  document.getElementById('progress-wrap').style.display  = 'block';
+
+  showQuestion();
+}
+
+function showQuestion() {
+  if (practiceIndex >= practiceQueue.length) {
+    showSummary(); return;
+  }
+  const k    = practiceQueue[practiceIndex];
+  const mode = document.getElementById('practice-mode').value;
+  const isYomi2Kanji = mode === 'yomi2kanji' || (mode === 'all' && Math.random() > 0.5);
+
+  clearCanvas();
+  document.getElementById('answer-reveal').classList.remove('show');
+  document.getElementById('result-btns').style.display = 'none';
+  document.getElementById('reveal-btn').style.display  = 'inline-flex';
+  document.getElementById('prompt-sub').style.display  = 'none';
+
+  if (isYomi2Kanji) {
+    document.getElementById('prompt-label').textContent = '読みから漢字を書いてください';
+    document.getElementById('prompt-value').textContent = k.yomi;
+    if (k.meaning) {
+      document.getElementById('prompt-sub').textContent = k.meaning;
+      document.getElementById('prompt-sub').style.display = 'block';
+    }
+    document.getElementById('answer-kanji').textContent = k.kanji;
+    document.getElementById('answer-detail').textContent = k.yomi + (k.meaning ? '　' + k.meaning : '');
+  } else {
+    document.getElementById('prompt-label').textContent = '漢字の読みを書いてください';
+    document.getElementById('prompt-value').textContent = k.kanji;
+    document.getElementById('answer-kanji').textContent = k.yomi;
+    document.getElementById('answer-detail').textContent = k.kanji + (k.meaning ? '　' + k.meaning : '');
+  }
+
+  const total = practiceQueue.length;
+  const done  = practiceIndex;
+  document.getElementById('prog-bar').style.width = (done / total * 100) + '%';
+  document.getElementById('prog-text').textContent = `${done} / ${total}`;
+}
+
+function revealAnswer() {
+  document.getElementById('answer-reveal').classList.add('show');
+  document.getElementById('result-btns').style.display = 'flex';
+  document.getElementById('reveal-btn').style.display  = 'none';
+}
+
+function markResult(correct) {
+  const k     = practiceQueue[practiceIndex];
+  const stats = loadStats();
+  if (!stats[k.id]) stats[k.id] = { correct: 0, wrong: 0 };
+  if (correct) {
+    stats[k.id].correct++;
+    sessionCorrect++;
+  } else {
+    stats[k.id].wrong++;
+    sessionWrong++;
+    sessionWrongs.push(k);
+  }
+  saveStats(stats);
+  practiceIndex++;
+  showQuestion();
+}
+
+function showSummary() {
+  document.getElementById('practice-main').style.display = 'none';
+  const total = sessionCorrect + sessionWrong;
+  const pct   = total ? Math.round(sessionCorrect / total * 100) : 0;
+  document.getElementById('summary-score').textContent = pct + '%';
+  document.getElementById('sum-correct').textContent = sessionCorrect;
+  document.getElementById('sum-wrong').textContent   = sessionWrong;
+  document.getElementById('sum-total').textContent   = total;
+
+  const wl = document.getElementById('weak-list');
+  if (sessionWrongs.length) {
+    wl.innerHTML = `<div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">不正解の漢字：</div>` +
+      sessionWrongs.map(k => `<span class="sticker">${k.kanji}（${k.yomi}）</span>`).join('');
+  } else {
+    wl.innerHTML = `<div style="color:var(--green); font-weight:700; margin-bottom:8px;">🎊 全問正解！素晴らしい！</div>`;
+  }
+
+  const prog = document.getElementById('prog-bar');
+  prog.style.width = '100%';
+  document.getElementById('prog-text').textContent = `${total} / ${total}`;
+  document.getElementById('summary-card').classList.add('show');
+}
+
+// ===================== 統計 =====================
+function renderStats() {
+  const list  = loadKanji();
+  const stats = loadStats();
+
+  let totalCorrect = 0, totalWrong = 0;
+  list.forEach(k => {
+    const s = stats[k.id] || { correct:0, wrong:0 };
+    totalCorrect += s.correct;
+    totalWrong   += s.wrong;
+  });
+  const total = totalCorrect + totalWrong;
+  const pct   = total ? Math.round(totalCorrect / total * 100) : 0;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="num">${list.length}</div><div class="lbl">登録漢字数</div></div>
+    <div class="stat-card"><div class="num">${total}</div><div class="lbl">累計練習回数</div></div>
+    <div class="stat-card"><div class="num" style="color:var(--green)">${totalCorrect}</div><div class="lbl">累計正解数</div></div>
+    <div class="stat-card"><div class="num">${pct}%</div><div class="lbl">総合正解率</div></div>
+  `;
+
+  const detailList = [...list].sort((a, b) => {
+    const sa = stats[a.id] || { correct:0, wrong:0 };
+    const sb = stats[b.id] || { correct:0, wrong:0 };
+    const ra = (sa.correct + sa.wrong) ? sa.correct / (sa.correct + sa.wrong) : -1;
+    const rb = (sb.correct + sb.wrong) ? sb.correct / (sb.correct + sb.wrong) : -1;
+    return ra - rb;
+  });
+
+  if (detailList.length === 0) {
+    document.getElementById('stats-detail-list').innerHTML = `
+      <div class="empty-state"><div class="empty-icon">📊</div><div>まだデータがありません</div></div>`;
+    return;
+  }
+
+  document.getElementById('stats-detail-list').innerHTML = detailList.map(k => {
+    const s     = stats[k.id] || { correct: 0, wrong: 0 };
+    const t     = s.correct + s.wrong;
+    const rate  = t ? Math.round(s.correct / t * 100) : null;
+    const color = rate === null ? '#aaa' : rate >= 80 ? 'var(--green)' : rate >= 50 ? '#e67e22' : 'var(--accent)';
+    return `
+      <div style="display:flex; align-items:center; gap:16px; padding:12px 0; border-bottom:1px solid var(--border);">
+        <div style="font-size:2rem; font-weight:900; width:50px; text-align:center; color:var(--accent2)">${k.kanji}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700">${k.yomi}</div>
+          ${k.meaning ? `<div style="font-size:0.8rem; color:var(--text-muted)">${k.meaning}</div>` : ''}
+        </div>
+        <div style="text-align:right; min-width:100px;">
+          ${rate !== null
+            ? `<span style="font-size:1.3rem; font-weight:900; color:${color}">${rate}%</span>
+               <div style="font-size:0.75rem; color:var(--text-muted)">${s.correct}正解 / ${t}回</div>`
+            : `<span style="color:#aaa; font-size:0.85rem">未練習</span>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ===================== 初期化 =====================
+document.getElementById('inp-kanji').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-yomi').focus();
+});
+document.getElementById('inp-yomi').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-meaning').focus();
+});
+document.getElementById('inp-meaning').addEventListener('keydown', e => {
+  if (e.key === 'Enter') registerKanji();
+});
+
+renderList();
+</script>
+</body>
+</html>
